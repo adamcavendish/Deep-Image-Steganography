@@ -1,0 +1,4 @@
+logging/
+error.log
+
+__pycache__/
