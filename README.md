@@ -3,7 +3,7 @@
 
 ## How to create ImageNet Dataset used by StegNet
 
-[[Read the LMDB Creator Doc][./lmdb_creator/README.md]]
+[Read the LMDB Creator Doc](./lmdb_creator/README.md)
 
 
 ## How to run the StegNet Model
