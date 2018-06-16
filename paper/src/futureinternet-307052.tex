@@ -1,0 +1,845 @@
+\PassOptionsToPackage{inline}{enumitem}
+\PassOptionsToPackage{dvipsnames}{xcolor}
+
+\RequirePackage{expl3}
+\documentclass[futureinternet,article,accept,moreauthors,pdftex,10pt,a4paper]{Definitions/mdpi}
+
+\usepackage{iftex}
+
+\ifPDFTeX%
+  \usepackage[utf8]{inputenc}
+%  \usepackage[pdftex]{graphicx}
+\else
+  \RequirePackage{fontspec}
+%  \usepackage{graphicx}
+\fi
+
+% \usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{textcomp}
+
+\usepackage{caption}
+\usepackage{csquotes}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{hyperref}
+\usepackage{layouts}
+\usepackage{subcaption}
+\usepackage{xcolor}
+
+\usepackage[labelformat=simple]{subcaption}
+\renewcommand\thesubfigure{\alph{subfigure}}
+\DeclareCaptionLabelFormat{subcaptionlabel}{\normalfont(\textbf{#2}\normalfont)}
+\captionsetup[subfigure]{labelformat=subcaptionlabel}
+
+\hypersetup{
+    pdfauthor={Yang Yang},
+    pdfcreator={Yang Yang},
+    pdfproducer={Yang Yang},
+}
+
+\graphicspath{
+    {images/}
+    {template/MDPI/}
+}
+
+\firstpage{1}
+\makeatletter
+\setcounter{page}{\@firstpage}
+\makeatother
+\pubvolume{xx}
+\issuenum{1}
+\articlenumber{1}
+\pubyear{2018}
+\copyrightyear{2018}
+%\externaleditor{Academic Editor: name}
+\history{Received: 6 May 2018; Accepted: 12 June 2018; Published: 15 June 2018}
+
+% \updates{yes} % If there is an update available, un-comment this line
+
+% The following line should be uncommented if the LaTeX file is uploaded to arXiv.org
+%\pdfoutput=1
+
+%\captionsetup[figure] {
+%  justification=centering
+%}
+
+\newcommand{\abs}[1]{ \left\lvert#1\right\rvert}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+
+\newcommand{\adamIncludeFigure}[3]{
+  \subcaptionbox{#2}{\includegraphics[width=#1\linewidth]{#3}}
+}
+
+\newcommand{\adamIncludeFigureCS}[4]{
+  \subcaptionbox{#3}[#2\linewidth]{\includegraphics[width=#1\linewidth]{#4}}
+}
+
+%\input{./tex/00_macro.tex}
+\Title{StegNet: Mega Image Steganography Capacity with Deep Convolutional Network}
+\newcommand{\orcidauthorA}{0000-0002-1411-1188}
+\newcommand{\orcidauthorB}{0000-0002-6627-2987}
+\newcommand{\orcidauthorC}{0000-0001-7243-2783}
+
+\Author{%
+  Pin Wu  \(^{1}\)  \orcidA, Yang Yang \(^{1}\) \orcidB\,and Xiaoqiang Li \(^{1,2,}\)* \orcidC}
+
+
+\AuthorNames{%
+    Pin Wu
+,   Yang Yang
+and Xiaoqiang Li
+}
+
+\address{%
+\(^{1}\) \quad School of Computer Science, Shanghai University, China; wupin@shu.edu.cn (P.W.); adamcavendish@shu.edu.cn (Y.Y.)\\%please add city and zip code
+\(^{2}\) \quad Shanghai Institute for Advanced Communication \& Data Science, Shanghai University, China
+}%please add city and zip code
+
+\corres{Correspondence: xqli@shu.edu.cn}
+
+
+\abstract{Traditional image steganography often leans interests towards safely embedding hidden information into cover images with payload capacity almost neglected. This paper combines recent deep convolutional neural network methods with image-into-image steganography. It successfully hides the same size images with a decoding rate of 98.2\% or bpp (bits per pixel) of 23.57 by changing only 0.76\% of the cover image on average. Our method directly learns end-to-end mappings between the cover image and the embedded image and between the hidden image and the decoded image. We~further show that our embedded image, while with mega payload capacity, is still robust to statistical analysis.
+}
+\keyword{convolutional neural network; image steganography; steganography capacity}
+
+\begin{document}
+
+%\input{./tex/02_introduction.tex}
+\section{Introduction}%
+\label{sec:introduction}
+
+Image steganography, aiming at delivering a modified cover image to secretly transfer hidden information inside with little awareness of the third-party supervision, is a classical computer vision and cryptography problem. Traditional image steganography algorithms go to their great length to hide information into the cover image while little consideration is tilted to payload capacity, also known as the ratio between hidden and total information transferred. The~payload capacity is one significant factor to steganography methods because if more information is to be hidden in the cover, the~visual appearance of the cover is altered further and thus the risk of detection is higher 
+(The source code is available at: \url{https://github.com/adamcavendish/StegNet-Mega-Image-Steganography-Capacity-with-Deep-Convolutional-Network}).
+
+The most commonly used image steganography for hiding large files during transmission is embedding a RAR archive (Roshal ARchive file format) after a JPEG (Joint Photographic Experts Group) file. In such way, it can store an infinite amount of extra information theoretically. However, the~carrier file must be transmitted as it is, since any third-party alteration to the carrier is going to destroy all the hidden information in it, even just simply read out the image and save it again will corrupt the hidden information.
+
+To maximize the payload capacity while still resistible to simple alterations, pixel level steganography is majorly used, in which LSB (least significant bits) method~\cite{LSBRevisited}, BPCS~\cite{BPCS} (Bit Plane Complexity Segmentation), and their extensions are in dominant. LSB-based methods can achieve a payload capacity of up to 50\%, or otherwise, a vague outline of the hidden image would be exposed (see Figure~\ref{fig:vagueoutline}). However, most of these methods are vulnerable to statistical analysis, and therefore it can be easily detected.
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{ccc}
+    \adamIncludeFigureCS{0.2}{0.25}{Cover Image}{vague_outline/hidden_outline_visible_covr.png}
+    \adamIncludeFigureCS{0.2}{0.25}{Hidden Image}{vague_outline/hidden_outline_visible_hide.png}
+    \adamIncludeFigureCS{0.2}{0.25}{Embedded Image}{vague_outline/hidden_outline_visible_steg_lsb4.png}
+  \end{tabular}
+  \vspace{-8pt}
+  \caption{Vague Outline Visible in 4-bit LSB Steganography Embedded-Cover-Diversity = 50\%, Hidden-Decoded-Diversity = 50\%, Payload Capacity = 12 bpp.}%
+\label{fig:vagueoutline}
+\end{figure}
+
+Some traditional steganography methods with balanced attributes are hiding information in the JPEG DCT components. For instance, A. Almohammad's work~\cite{HCJPEG} provides around 20\% of payload capacity (based on the patterns) and still remains undetected through statistical analysis.
+
+Most secure traditional image steganography methods recently have adopted several functions to evaluate the embedding localizations in the image, which~enables content-adaptive steganography. HuGO~\cite{HuGO} defines a distortion function domain by giving every pixel a changing cost or embedding impact based on its effect. It uses a weighted norm to represent the feature space. WOW (Wavelet Obtained Weights)~\cite{WOW} embeds information according to the textural complexity of the image regions. Work~\cite{UniDistortion, CASMinStatDetect} have discussed some general ways of content-adaptive steganography to avoid statistical analysis. Work~\cite{CASBatch} is focusing on content-adaptive batched steganography. These methods highly depend on the patterns of the cover image, and therefore the average payload capacity can be hard to~calculate.
+
+The major contributions of our work are as follows:
+\begin{enumerate*}[label=\roman*)]
+  \item[(i)] We propose a methodology to apply neural networks for image steganography to embed image information into image information without any help of traditional steganography methods.
+  \item[(ii)] Our implementation raises image steganography payload capacity to an average of 98.2\% or 23.57 bpp (bits per pixel), changing only around 0.76\% of the cover image (See Figure~\ref{fig:stegnetvslsb3}).
+  \item[(iii)] We propose a new cost function named variance loss to suppress noise pixels generated by generator network.
+  \item[(iv)] Our implementation is robust to statistical analysis and 4 other widely used steganography analysis methods.
+\end{enumerate*}
+
+The decoded rate is calculated by
+\csdef{CE}{\mathrm{CE}}
+\csdef{HD}{\mathrm{HD}}
+\begin{equation}
+\textrm{Decoded Rate} = 1 - \frac{\sum_{i=1}^{N} \sum_{j=1}^{M} \abs{H_{i,j} - D_{i,j}}}{N \times M} ,
+\end{equation}
+the cover changing rate is calculated by
+\begin{equation}
+\textrm{Cover Changing Rate} = \frac{\sum_{i=1}^{N} \sum_{j=1}^{M} \abs{C_{i,j} - E_{i,j}}}{N \times M}
+\end{equation}
+and the bpp (bits per pixel) is calculated by
+\begin{equation}
+\textrm{Capacity} = \textrm{Decoded Rate} \times 8 \times 3 \quad \textrm{(bpp)}
+\end{equation}
+where \(C, H, E, D\) symbols stand for the cover image (\(C\)), the~hidden image (\(H\)), the~embedded image~(\(E\)) and the decoded image (\(D\)) in correspondence, and ``8, 3'' stands for number of bits per channel and number of channels per pixel respectively.
+
+\csundef{HD}
+\csundef{CE}
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{ccc}
+    \adamIncludeFigureCS{0.2}{0.25}{Cover Image}        {effect_comparison/image_1_covr.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Embedded}   {effect_comparison/image_1_steg_stegnet.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Embedded} {effect_comparison/image_1_steg_lsb3.png}\\
+
+    \adamIncludeFigureCS{0.2}{0.25}{Hidden Image}       {effect_comparison/image_1_hide.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Decoded}    {effect_comparison/image_1_dcpt_stegnet.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Decoded}  {effect_comparison/image_1_dcpt_lsb3.png}
+  \end{tabular}
+  \vspace{-8pt}
+  \caption{{~StegNet and 3-bit LSB Comparison Embedded-Cover-Diversity = 0.76\%, Hidden-Decoded- Diversity = 1.8\%, Payload Capacity = 23.57 bpp.}}%
+\label{fig:stegnetvslsb3}
+\end{figure}
+
+This paper is organized as follows. Section~\ref{sec:relatedwork} will describe traditional high-capacity steganography methods and the convolution neural network used by this paper. Section~\ref{sec:convsteg} will unveil the secret why the neural network can achieve the amount of capacity encoding and decoding images. The~architecture and experiments of our neural network are discussed in Sections~\ref{sec:architecture} and \ref{sec:experiments}, and finally, we'll make a conclusion and put forward some future works in Section~\ref{sec:conclusion}.
+
+%\input{./tex/03_relatedwork.tex}
+\section{Related Work}%
+\label{sec:relatedwork}
+
+\vspace{-6pt}
+\subsection{Steganography Methods}%
+\label{ssec:stegmethods}
+
+Most steganography methods can be grouped into three basic types, which~is image domain steganography, transform domain steganography and file-format-based steganography. Image domain ones have an advantage of simplicity and better payload capacity while being more likely to be detected. Transform domain ones usually have a more complex algorithm but hides pretty well through third-party analysis. File-format-based ones depend very much on the file format which makes it quite fragile to alterations.
+
+\subsection{JPEG RAR Steganography}%
+\label{ssec:jpegrar}
+
+The JPEG RAR Steganography is a kind of file-format-based steganography, which~uses a feature in these two file format specifications. (JPEG~\cite{jpegspec} and RAR~\cite{rarspec})
+
+After the JPEG file has scanned the segment of EOI (End Of Image) (0xd9 in hex format), all the remaining segments are ignored (skipped), and therefore any information is allowed to be appended afterward. A RAR file~~\cite{rarspec} has the magic file header ``0x52 0x61 0x72 0x21 0x1a 0x07 0x00'' in hex format (\textquote{Rar!} as characters) and the parser will ignore all the information before the file header. It is possible to dump the binary of the RAR file after the JPEG file, and it'll apparently act as if it is a JPEG image file while it is actually also a RAR archive. However, the~method is very fragile to any file alterations. Third-party surveillance might truncate useless information to save transmission resource or apply some image alterations to attack potential steganography. Any alteration will crash the steganography, and all hidden information is lost.
+
+\subsection{LSB (Least Significant Bit) Method}%
+\label{ssec:lsbmethod}
+
+LSB (Least Significant Bit)-based methods~\cite{LSBRevisited} are the most commonly used image domain steganography methods which hide information at the pixel level. Most LSB methods aim at altering parts of the cover image to such an extent that human visual system can barely notice. These methods are motivated by the fact that the visual part of most figures is dominated by the highest bits of each pixel, and the LSB bits (the underlined part of one pixel as shown in Figure~\ref{fig:lsbexplained}) are statistically similar to randomly generated data, and therefore, hiding information via altering LSB cannot change the visual result apparently.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.5\linewidth]{LSB_explained}
+  \caption{LSB Explaination.}%
+\label{fig:lsbexplained}
+\end{figure}
+
+The embedding operation of LSB method for the least bit single channel image is described as~follows:
+\begin{equation*}
+S_{i} = (C_{i} \land \mathrm{FE_{HEX}}) \lor ((M_{i} \land \mathrm{80_{HEX}}) >> 7)
+\end{equation*}
+where \(S_{i}\), \(C_{i}\) and \(M_{i}\) are the \emph{i}th pixel of image after steganography, \emph{i}th pixel of cover image and \emph{i}th bit of the hiding message.
+
+Since the least significant bits of the image data should look like random data, there are major two schemes in distributing the hiding data. The~first kind of methods is to put in the hiding message sequentially after encrypting or compressing to achieve the randomness. The~second kind of methods is scattering the hiding data by adopting a mutually acknowledged random seed by which generates the actual hiding sequence~\cite{RobustImageSteg}.
+
+\subsection{JPEG Steganography}%
+\label{ssec:hcjpeg}
+
+JPEG steganography, i.e., Chang's work~\cite{JPEGSteg} and A. Almohammad's work~\cite{HCJPEG}, is a part of transform domain steganography. JPEG format examines an image in \(8 \times 8\) blocks of pixels, converts from RGB color space into YCrCb (luminance and chrominance) color space, applies DCT (Discrete Cosine Transformation), quantizes the result, and entropy encodes the rest. After lossy compression, which~is after quantization, the~hidden information is hidden into the quantized DCT components, which~serves as an LSB embedding in the transformed domain. As a result, it is quite hard to detect using statistical analysis and comparably lower payload capacity to LSB method.
+
+\subsection{Convolutional Neural Network}%
+\label{ssec:convnet}
+
+Convolutional neural network~\cite{conv}, though dates back to the 1990s, is now trending these years after AlexNet~\cite{alexnet} won the championship of ImageNet competition. It has successfully established new records in many fields like classification~\cite{imagenet2017}, object segmentation~\cite{coco2016}, etc. A lot of factors boosted the progress including the development of modern GPU hardware, the~work of ReLU (Rectified Linear Unit)~\cite{relu} and its extensions, and finally, the~abundance of training data~\cite{imagenet}. Our work also benefits a lot from these factors.
+
+The convolution operation is not solely used in neural networks, but also widely used in traditional computer vision methods. For instance, gaussian smoothing kernel is extensively used for image blurring and noise reduction, which, in implementation, is equal to applying a convolution between the original image and a gaussian function. Many other contributions in traditional methods are handcrafted patterns, kernels or filter combinations, i.e.,\ the Sobel-Feldman filter~\cite{SobelFeldmanFilter} for edge detection, Log-Gabol filter~\cite{fischer07cv} for texture detection, HOG~\cite{HOG} for object detection, etc.
+
+However, designing and tuning handcrafted patterns are highly technical and might be effective for only some tasks. On the contrary, convolutional neural networks have the advantage of automatically creating patterns for specific tasks through back-propagation~\cite{RumelhartBP} on its own, and even further, high-level features can be easily learned through combinations of convolution operations~\cite{Zeiler_Fergus_2013, olah2017feature,Mahendran_Vedaldi_2014}.
+
+\subsection{Autoencoder Neural Network}%
+\label{ssec:autoencoder}
+
+Our method is inspired by traditional autoencoder neural networks~\cite{hinton1994autoencoders}, which~was originally trained to generate an output image the same as input image in appearance. It is usually made up of two neural networks, one encoding network \(h = f(x)\) and one decoding network \(d = g(h)\), restricted under \(d = x\), who finally can learn the conditional probability distribution of \(p(h|x)\) and \(p(x|h)\) correspondently. The~autoencoder architecture has shown the ability to extract salient features in from images seen through shrinking hidden layer (\(h\))'s dimension, which~has been applied to various fields, i.e.,\ denoising~\cite{vincent2008extracting}, dimension reduction~\cite{wang2014generalized}, image generation~\cite{VAE}, etc.
+
+\subsection{Neural Network for Steganography}%
+\label{ssec:nnsteg}
+
+Recently there are some works on applying neural networks for steganography. El-Emam~\cite{El-emam_2008} and Saleema~\cite{Saleema_Amarunnishad_2016} work on using neural networks to refine the embedded image generated via traditional steganography methods, i.e., LSB method. Volkhonskiy's~\cite{SGAN} and Shi's~\cite{SSGAN} work focus on generating secure cover images for traditional steganography methods to apply image steganography. Baluja~\cite{Baluja_2017} is working on the same field as StegNet. However, the~hidden image is slightly visible on residual images of the generated embedded images. Moreover, his architecture uses three networks which requires much more GPU memory and takes more time to embed.
+
+%\input{./tex/04_convsteg.tex}
+\section{Convolutional Neural Network for Image Steganography}%
+\label{sec:convsteg}
+
+\vspace{-6pt}
+\subsection{High-order Transformation}%
+\label{ssec:highordertrans}
+
+In image steganography, we argue that we should not only focus on where to hide information, which~most traditional methods work on, but we should also focus on how to hide it.
+
+Most traditional steganography methods usually directly embed hidden information into parts of pixels or transformed correspondances. The~transformation regularly occurs in \textit{where to hide}, either~actively applied in the steganography method or passively applied because of file format. As a result, the~payload capacity is highly related and restricted to the area of the texture-rich part of the image detected by the \textit{handcoded} patterns.
+
+DCT-based steganography is one of the most famous transform domain steganography. We~can consider the DCT process in JPEG lossy compression process as a kind of one-level high-order transformation which works at a block level, converting each \(8 \times 8\) or \(16 \times 16\) block of pixel information into its corresponding frequency-domain representation. Even hiding in DCT transformed frequency-domain data, traditional works~\cite{JPEGSteg, HCJPEG} embed hidden information in mid-frequency band via LSB-alike methods, which~eventually cannot be eluded.
+
+While in contrast, deep convolution neural network makes multi-level high-order transformations possible for image steganography. Figure~\ref{fig:ConvReceptiveField} shows the receptive field of one high-level kernel unit in a demo of a three-layer convolutional neural network. After lower-level features are processed by kernels and propagated through activations along middle layers, the~receptive field of final higher-level kernel unit is able to absorb 5 lower-level features of the first layer and form its own higher-level feature throughout the training process.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.2\linewidth]{ConvReceptiveField}
+  \caption{Receptive Field of Convolutional Neural Network.}%
+\label{fig:ConvReceptiveField}
+\end{figure}
+
+\subsection{Trading Accuracy for Capacity}%
+\label{ssec:tradingaccforcap}
+
+Traditional image steganography algorithms mostly embed hidden information as it is or after applying lossless transformations. After decoding, the~hidden information is extracted as it is or after the corresponding detransformations are applied. Therefore, empirically speaking, it is just as file compression methods, where lossless compression algorithms usually cannot outperform lossy compression algorithms in capacity.
+
+We need to think in a ``lossy'' way in order to embed almost equal amount of information into the cover. The~model needs to learn to compress the cover image and the hidden image into an embedding of high-level features and converts them into an image that appears as similar as the cover image, which~comes to the vital idea of trading accuracy for capacity.
+
+Trading accuracy for capacity means that we do not limit our model in reconstructing at a pixel-level accuracy of the hidden image, but aiming at ``recreating'' a new image with most of the features in it with a panoramic view, i.e.,\ the spider in the picture, the~pipes' position relatively correct, the~outline of the mountain, etc.
+
+In other words, the~traditional approaches work in lossless ways, which~after some preprocessing to the hidden image, the~transformed data is crammed into the holes prepared in the cover image. However, StegNet approach decoded image has no pixel-wise relationship with the hidden image at all, or strictly speaking, there is no reasonable transformation between each pair of corresponding pixels, but the decoded image as a whole can represent the original hidden image's meaning through neural network's reconstruction.
+
+In the encoding process, the~model needs to transform from a low-level massive amount of pixel-wise information into some high-level limited sets of featurewise information with an understanding of the figure, and come up with a brand new image similar to the cover apparently but with hidden features embedded. In the decoding process, on the contrary, the~model is shown only the embedded figure, from which both cover and hidden high-level features are extracted, and the hidden image is rebuilt according to network's own comprehension.
+
+As shown in Figures~\ref{fig:StegNetResidualHist} and \ref{fig:StegNetResidualFig}, StegNet is not applying LSB-like or simple merging methods to embed the hidden information into the cover. The~residual image is neither simulating random noise (LSB-based approach, see Figure~\ref{fig:LSB3ResidualFig}) nor combining recognizable hidden image inside. The~embedded pattern is distributed across the whole image and even magnified 5 to 10 times, the~residual image is similar to the cover image visually which can help decrease the abnormality exposed to the human visual system and finally avoid to be detected.
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{cc}
+    \adamIncludeFigure{0.5}{}{residual_comparison/histogram/image_1_diff_covr_steg_hist_stegnet_mag01_sp}
+    \adamIncludeFigure{0.5}{}{residual_comparison/histogram/image_1_diff_hide_dcpt_hist_stegnet_mag01_sp}
+  \end{tabular}
+  \vspace{-16pt}
+  \caption{Residual image histograms shows that the residual error is distributed  across the images. \textbf{(a)} Residual between cover and embedded; \textbf{(b)} Residual between
+  hidden and decoded.}%
+\label{fig:StegNetResidualHist}
+\end{figure}
+\vspace{-12pt}
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{cccc}
+    \adamIncludeFigureCS{0.2}{0.25}{Cover}               {residual_comparison/image_1_covr.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Embedded}    {residual_comparison/image_1_steg_stegnet.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Residual \(\times 05\)}{residual_comparison/magnified/image_1_diff_covr_steg_stegnet_mag05.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Residual \(\times 10\)}{residual_comparison/magnified/image_1_diff_covr_steg_stegnet_mag10.png}\\
+
+    \adamIncludeFigureCS{0.2}{0.25}{Hidden}              {residual_comparison/image_1_hide.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Decoded}     {residual_comparison/image_1_dcpt_stegnet.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Residual \(\times 05\)}{residual_comparison/magnified/image_1_diff_hide_dcpt_stegnet_mag05.png}
+    \adamIncludeFigureCS{0.2}{0.25}{StegNet Residual \(\times 10\)}{residual_comparison/magnified/image_1_diff_hide_dcpt_stegnet_mag10.png}
+  \end{tabular}
+  \vspace{-14pt}
+  \caption{StegNet residual images  ``\(\times 05\)'' and ``\(\times 10\)'' are the pixel-wise enhancement ratio.}%
+\label{fig:StegNetResidualFig}
+\end{figure}
+
+\vspace{-12pt}
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{cccc}
+    \adamIncludeFigureCS{0.2}{0.25}{Cover}                 {residual_comparison/image_1_covr.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Embedded}    {residual_comparison/image_1_steg_lsb3.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Residual \(\times 05\)}{residual_comparison/magnified/image_1_diff_covr_steg_lsb3_mag05.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Residual \(\times 10\)}{residual_comparison/magnified/image_1_diff_covr_steg_lsb3_mag10.png}\\
+
+    \adamIncludeFigureCS{0.2}{0.25}{Hidden}                {residual_comparison/image_1_hide.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Decoded}     {residual_comparison/image_1_dcpt_lsb3.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Residual \(\times 05\)}{residual_comparison/magnified/image_1_diff_hide_dcpt_lsb3_mag05.png}
+    \adamIncludeFigureCS{0.2}{0.25}{3-bit LSB Residual \(\times 10\)}{residual_comparison/magnified/image_1_diff_hide_dcpt_lsb3_mag10.png}
+  \end{tabular}
+  \vspace{-12pt}
+  \caption{ 3-bit LSB residual images ``\(\times 05\)'' and ``\(\times 10\)'' are the pixel-wise enhancement ratio.}%
+\label{fig:LSB3ResidualFig}
+\end{figure}
+
+The residual image is computed via
+%
+\begin{equation}
+  R(I_{1}, I_{2}) = \frac{\abs{I_{1} - I_{2}}}{\max \abs{I_{1} - I_{2}}} ,
+\end{equation}
+%
+and the magnification or the enhancement operation is achieved via
+%
+\begin{equation}
+  E(I, M) = \mathrm{clip}(I \cdot M, 0, 1) ,
+\end{equation}
+%
+where \(I\) takes residual images, which~are effectively normalized to \([0, 1]\) and \(M\) is the magnification ratio, which~\(5\) and \(10\) are chosen visualize the differences in this paper.
+
+%\input{./tex/05_architecture.tex}
+\section{Architecture}%
+\label{sec:architecture}
+\vspace{-6pt}
+\subsection{Architecture Pipeline}%
+\label{ssec:pipeline}
+
+The whole processing pipeline is shown in Figure~\ref{fig:pipeline}, which~consists of two almost identical neural network structure responsible for encoding and decoding. The~identical structures are taken from Autoencoder~\cite{hinton1994autoencoders}, GAN~\cite{GAN}, etc., which~help the neural network model similar high-level features of images in their latent space. The~details of embedding and decoding structure are described in Figure~\ref{fig:StegNetArch}. In the embedding procedure, the~cover image and the hidden image are concatenated by channel while only the embedded image is shown to the network. Two parts of the network are both majorly made up of one lifting layer which lifts from figure channels to a uniform of 32 channels, six~\(3 \times 3\) basic building blocks raising features into high-dimensional latent space and one reducing layer which transforms features back to image space.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{pipeline/Pipeline-multicolor}
+  \vspace{-12pt}
+  \caption{StegNet Processing Pipeline.}%
+\label{fig:pipeline}
+\end{figure}
+
+
+The basic building block named \textquote{Separable Convolution with Residual Block} (abbreviated as \textquote{SCR} in the following context) has the architecture as Figure~\ref{fig:SCRBlock}. We~adopt batch-normalization~\cite{batchnorm} and exponential linear unit (ELU)~\cite{elu} for quicker convergence and better result.
+
+\subsection{Separable Convolution with Residual Block}%
+\label{ssec:residualsepconv}
+
+Our work adopt the state of the art neural network structure, the~skip connections in Highway Network~\cite{highway}, ResNet~\cite{resnet} and ResNeXt~\cite{resnext}, and separable convolution~\cite{sepconv} together to form the basic building block \textquote{SCR}.
+
+The idea behind separable convolution~\cite{sepconv} originated from Google's Inception models~\cite{inceptionv1, inceptionv4} (see Figure~\ref{fig:InceptionV3} for its building blocks), and the hypothesis behind is that \textquote{cross-channel correlations and spatial correlations are decoupled}. Further, in Xception architecture~\cite{sepconv}, it makes an even stronger hypothesis that \textquote{cross-channel correlations and spatial correlations can be mapped completely separately}. Together with skip-connections~\cite{resnet} the gradients are preserved in backpropagation process via skip-connections to frontier layers and as a result, ease the problem of vanishing gradients.
+
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{cc}
+    \adamIncludeFigure{0.3}{Embedding Structure}{structure/EncodeStructure}
+    \adamIncludeFigure{0.3}{Decoding Structure}{structure/DecodeStructure}
+  \end{tabular}
+  \vspace{-11pt}
+  \caption{StegNet Network Architecture.}%
+\label{fig:StegNetArch}
+\end{figure}
+\vspace{-12pt}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\linewidth]{SCRBlock/SCRBlock4}
+  \vspace{-6pt}
+  \caption{Separable Convolution with Residual Block.}%
+\label{fig:SCRBlock}
+\end{figure}
+  \vspace{-12pt}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.7\linewidth]{inception/InceptionV3_2}
+\vspace{-3pt}
+  \caption{Basic Building Block in Inception v3.}%
+\label{fig:InceptionV3}
+\end{figure}
+
+\subsection{Training}%
+\label{ssec:training}
+
+Learning the end-to-end mapping function from cover and hidden image to embedded image and embedded image to decoded image requires the estimation of millions of parameters in the neural network. It is achieved via minimizing the weighted loss of \(L_{1}\)-loss between the cover and the embedded image, \(L_{1}\)-loss between the hidden and the decoded image, and their corresponding variance losses (variance should be computed across images' height, width and channel). \(C, H, E, D\) symbols stand for the cover image (\(C\)), the~hidden image (\(H\)), the~embedded image (\(E\)) and the decoded image (\(D\)) in correspondence. (See Equations~(\ref{eq:seploss1})--(\ref{eq:loss}))
+\csdef{CE}{\mathrm{CE}}
+\csdef{ED}{\mathrm{ED}}
+\csdef{HD}{\mathrm{HD}}
+\csdef{Var}{\mathrm{Var}}
+\begin{align}
+E_{i} &= F_{\CE}(C_{i}, H_{i}; \Theta_{\CE}) & D_{i} &= F_{\ED}(E_{i}; \Theta_{\ED})
+\label{eq:seploss1}\\
+L_{\CE} &= \frac{1}{n} \sum_{i=1}^{n} \abs{E_{i} - C_{i}} & L_{\HD} &= \frac{1}{n} \sum_{i=1}^{n} \abs{D_{i} - H_{i}}
+\label{eq:seploss2}
+\end{align}
+\begin{equation} \label{eq:loss}
+\mathrm{Loss} = \frac{1}{4} (L_{\CE} + L_{\HD} + \Var(L_{\CE}) + \Var(L_{\HD}))
+\end{equation}
+
+\(L_{\CE}\) is used to minimize the difference between the embedded image and the cover image, while~\(L_{\HD}\) is for the hidden image and the decoded image. Choosing only to decode the hidden image while not both the cover and the hidden images are under the consideration that the embedded image should be a concentration of high-level features apparently similar to the cover image whose dimension is half the shape of those two images, and some trivial information has been lost. It would have pushed the neural network to balance the capacity in embedding the cover and the hidden if both images are extracted at the decoding process.
+
+Furthermore, adopting variance losses helps to give a hint to the neural network that the loss should be distributed throughout the image, but not putting at some specific position (See Figure~\ref{fig:VarianceDiff} for differences between. The~embedded image without variance loss shows some obvious noise spikes (blue points) in the background and also some around the dog nose).
+
+\csundef{Var}
+\csundef{ED}
+\csundef{CE}
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{cc}
+    \adamIncludeFigureCS{0.25}{0.45}{Embedded Image with Variance Loss}   {var_loss_effect/stegnet_00_04_steg_bbox}
+    \adamIncludeFigureCS{0.25}{0.45}{Embedded Image without Variance Loss}{var_loss_effect/novar_00_04_steg_bbox} \\
+
+    \adamIncludeFigureCS{0.25}{0.45}{Red Box Magnified (with Variance Loss)}   {var_loss_effect/stegnet_00_04_steg_mag}
+    \adamIncludeFigureCS{0.25}{0.45}{Red Box Magnified (without Variance Loss)}{var_loss_effect/novar_00_04_steg_mag}
+  \end{tabular}
+  \vspace{-8pt}
+  \caption{Variance Loss Effect on Embedding Results.}%
+\label{fig:VarianceDiff}
+\end{figure}
+
+%\input{./tex/06_experiments.tex}
+\section{Experiments}%
+\label{sec:experiments}
+\vspace{-6pt}
+\subsection{Environment}%
+\label{ssec:environment}
+
+Our work is trained on one NVidia GTX1080 GPU and we adopt a batch size of 64 using Adam optimizer~\cite{adam} with learning rate at \(10^{-5}\). We~use no image augmentation and restrict model's input image to \(64 \times 64\) in height and width because of memory limit. Training with resized \(64 \times 64\) ImageNet can yield pretty good results. We~use 80\% of the ImageNet dataset for training and the remaining for testing to verify the generalization ability of our model. Figure~\ref{fig:onebatch} shows the result of applying StegNet steganography method on a batch of images. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{one_batch_example}
+  \caption{One batch Steganography Example.}%
+\label{fig:onebatch}
+\end{figure}
+
+\subsection{Statistical Analysis}%
+\label{ssec:statanalysis}
+
+The encoded and decoded images comparison between StegNet and LSB method are presented in Figure~\ref{fig:stegnetvslsb3}. They are very similar though, however, there is one critical flaw about the LSB method, in that it does not suffer through statistical analysis, and therefore LSB method is usually combined with transformations of the hidden image, i.e.,\ compression, randomization, etc.
+
+Figure~\ref{fig:stegnetvslsb3hist} is a comparison of histogram analysis between LSB method and our work. It shows a direct view of robustness of StegNet against statistical analysis, which~the StegNet embedded's histogram and the cover image's histogram are much more matching.
+
+
+A more all-around test is conducted through StegExpose~\cite{stegexpose}, which~combines several decent algorithms to detect LSB-based steganography, i.e.,\ sample pair analysis~\cite{samplepairanalysis}, RS analysis~\cite{fridrich2004reliable}, chi-square attack~\cite{westfeld1999attacks} and primary sets~\cite{dumitrescu2002steganalysis}. The~detection threshold is its hyperparameter, which~is used to balance true positive rate and false positive rate of the StegExpose's result. The~test is performed with linear interpolation of detection threshold from 0.00 to 1.00 with 0.01 as the step interval.
+
+Figure~\ref{fig:roccurve} is the ROC curve, where true positive stands for an embedded image correctly identified that there are hidden data inside while false positive means a clean figure falsely classified as an embedded image. The~figure is plotted in red-dash-line-connected scatter data, showing that StegExpose can only work a little better than random guessing, the~line in green. In other words, the~proposed steganography method can better resist StegExpose attack.
+
+
+\begin{figure}[H]
+  \centering
+  \begin{tabular}{ccc}
+    \adamIncludeFigureCS{0.2}{0.3}{Cover Image}       {hist_analysis/image_1_covr.png}
+    \adamIncludeFigureCS{0.2}{0.3}{StegNet Embedded}  {hist_analysis/image_1_steg_stegnet.png}
+    \adamIncludeFigureCS{0.2}{0.3}{3-bit LSB Embedded}{hist_analysis/image_1_steg_lsb3.png} \\
+  \vspace{-5pt}
+
+    \adamIncludeFigureCS{0.2}{0.3}{Cover Image Histogram}{hist_analysis/image_1_covr_hist.png}
+    \adamIncludeFigureCS{0.2}{0.3}{StegNet Histogram}    {hist_analysis/image_1_steg_stegnet_hist.png}
+    \adamIncludeFigureCS{0.2}{0.3}{3-bit LSB Histogram}  {hist_analysis/image_1_steg_lsb3_hist.png}
+  \end{tabular}
+  \vspace{-8pt}
+  \caption{Histogram Comparison between StegNet and Plain LSB.}%
+\label{fig:stegnetvslsb3hist}
+\end{figure}
+\vspace{-12pt}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\linewidth]{ROCCurve/ROC-Curve}
+  \vspace{-4pt}
+  \caption{ROC Curves: Detecting Steganography via StegExpose.}%
+\label{fig:roccurve}
+\end{figure}
+
+%\input{./tex/07_conclusion.tex}
+\section{Conclusions and Future Work}%
+\label{sec:conclusion}
+
+We have presented a novel deep learning approach for image steganography. We~show that the conventional image steganography methods mostly do not serve with good payload capacity. The~proposed approach, StegNet, creates an end-to-end mapping from the cover image, hidden~image to embedded image and from embedded image to decoded image. It has achieved superior performance than traditional methods and yet remains quite robust.
+
+As seen in Figure~\ref{fig:onebatch}, there is still some noise generated at non-texture-rich areas, i.e.,\ plain white or plain black parts. The~variance loss adopted by StegNet might not be the optimal solution to loss~distribution.
+
+In addition to the idea of ``trading accuracy for capacity'', the~embedded image does not need to be even visually similar to the cover image. The~only requirement to the embedded image is to pass the third-party supervision and the hidden image should be successfully decoded after the transmission is complete, and therefore the embedded image can look similar to anything that is inside the cover image dataset while can look nothing related to anything that is inside the hidden image dataset. Some of the state of the art generative models in neural networks can help achieve it, i.e.,\ Variational Autoencoders~\cite{VAE, AAE}, Generative Adversarial Networks~\cite{GAN, WGAN, BEGAN}, etc.
+
+Some work is needed for non-equal sized images steganography since ``1:1'' image steganography is huge for traditional judgment; however, the~ability of neural networks still remains to be discovered. Whether it is possible to generate approaches for even better capacity, or with a better visual quality for even safer from detections. Some other work is needed for non-image hidden information steganography, i.e.,\ text information, binary data. In addition to changing the hidden information type, the~cover information type may also vary from text information to even videos. Furthermore, some~work is needed for applying StegNet on lossy-compressed image file formats or third-party spatial translations, i.e.,\ cropping, resizing, stretching, etc.
+
+\vspace{6pt}
+
+%\input{./tex/08_misc.tex}
+\authorcontributions{%
+  Conceptualization, Y.Y. and X.L.; Data Curation: Y.Y.; Formal Analysis, Y.Y. and X.L.; Funding Acquisition, P.W. and X.L.; Investigation, Y.Y., X.L. and P.W.; Methodology, Y.Y. and X.L.; Project~Administration, P.W. and X.L.; Resources, Y.Y.; Software, Y.Y.; Supervision, P.W.; Validation, Y.Y.; Visualization, Y.Y.; Writing—Original Draft Preparation, Y.Y.; Writing—Review \& Editing, X.L. and Y.Y.}
+
+\funding{%
+This work was supported by the Shanghai Innovation Action Plan Project under grant number 16511101200.
+}
+
+\conflictsofinterest{%
+The authors declare no conflict of interest.
+}
+
+\reftitle{References}
+%\externalbibliography{yes}
+\begin{thebibliography}{999}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[Mielikainen(2006)]{LSBRevisited}
+Mielikainen, J.
+\newblock {Lsb matching revisited}.
+\newblock {\em IEEE Signal Process. Lett.} {\bf 2006}, {\em 13},~285--287.
+
+\bibitem[Kawaguchi and Eason(1998)]{BPCS}
+Kawaguchi, E.; Eason, R.
+\newblock {Principle and applications of BPCS-Steganography}. In Proceedings of the SPIE 3528, Multimedia Systems and Applications, Boston, MA, USA,  22 January 1999.
+
+
+
+\bibitem[Almohammad \em{et~al.}(2008)Almohammad, Hierons, and Ghinea]{HCJPEG}
+Almohammad, A.; Hierons, R.M.; Ghinea, G.
+\newblock {High Capacity Steganographic Method Based Upon JPEG}. In {Proceedings of the Third International Conference on Availability, Reliability  and Security}, Barcelona, Spain, 4--7 March 2008.
+
+
+\bibitem[Pevný \em{et~al.}(2010)Pevný, Filler, and Bas]{HuGO}
+Pevný, T.; Filler, T.; Bas, P., {Using High-Dimensional Image Models to
+  Perform Highly Undetectable Steganography}.
+\newblock In {\em Information Hiding}; Lecture Notes in Computer Science;
+  Springer: Berlin/Heidelberg, Germany,  2010; pp. 161--177.
+
+\bibitem[Holub and Fridrich(2012)]{WOW}
+Holub, V.; Fridrich, J., {Designing steganographic distortion using directional
+  filters}. In {Proceedings of the 2012 IEEE International Workshop on Information Forensics and
+  Security (WIFS)}, Tenerife, Spain, 2--5 December 2012; pp. 234--239.
+
+\bibitem[Holub \em{et~al.}(2014)Holub, Fridrich, and Denemark]{UniDistortion}
+Holub, V.; Fridrich, J.; Denemark, T.
+\newblock {Universal distortion function for steganography in an arbitrary
+  domain}.
+\newblock {\em EURASIP J. Inf. Secur.} {\bf 2014}, {\em 2014}.
+\newblock
+  doi:{\changeurlcolor{black}\href{https://doi.org/10.1186/1687-417X-2014-1}{\detokenize{10.1186/1687-417X-2014-1}}}.
+
+\bibitem[Sedighi \em{et~al.}(2016)Sedighi, Cogranne, and
+  Fridrich]{CASMinStatDetect}
+Sedighi, V.; Cogranne, R.; Fridrich, J.~{Content-Adaptive Steganography by Minimizing Statistical
+  Detectability}.
+\newblock {\em IEEE Trans. Inf. Forensics Secur.} {\bf
+  2016}, {\em 11},~221--234.
+\newblock
+  doi:{\changeurlcolor{black}\href{https://doi.org/10.1109/TIFS.2015.2486744}{\detokenize{10.1109/TIFS.2015.2486744}}}.
+
+\bibitem[Cogranne \em{et~al.}(2017)Cogranne, Sedighi, and Fridrich]{CASBatch}
+Cogranne, R.; Sedighi, V.; Fridrich, J., {Practical strategies for
+  content-adaptive batch steganography and pooled steganalysis}. In {Proceedings of the 2017 IEEE International Conference on Acoustics, Speech and  Signal Processing (ICASSP)},   New Orleans, LA, USA,  5--9 March 2017; pp. 2122--2126.
+
+
+\bibitem[jpe(1994)]{jpegspec}
+{\em Digital Compression and Coding of Continuous-Tone Still Images: Requirements
+  and Guidelines};
+\newblock Technical Report ISO/IEC 10918-1:1994; Joint Photographic Experts
+  Group Committee:  La Jolla, CA, USA, 1994.
+
+\bibitem[Roshal(2017)]{rarspec}
+Roshal, A.
+\newblock {RAR 5.0 Archive Format}. 2017.
+\newblock Available online: \url{https://www.rarlab.com/technote.htm} (accessed on 5 October 2017).
+
+\bibitem[Juneja and Sandhu(2009)]{RobustImageSteg}
+Juneja, M.; Sandhu, P.
+\newblock {Designing of robust image steganography technique based on LSB
+  insertion and encryption}. In {Proceedings of the IEEE International Conference on Advances in Recent Technologies  in Communication and Computing}, Kerala, India, 27--28 October 2009; pp. 302--305.
+
+
+\bibitem[Chang \em{et~al.}(2002)Chang, Chen, and Chung]{JPEGSteg}
+Chang, C.C.; Chen, T.S.; Chung, L.Z.
+\newblock A steganographic method based upon JPEG and quantization table
+  modification.
+\newblock {\em Inf. Sci.} {\bf 2002}, {\em 141},~123–138.
+
+\bibitem[Lecun \em{et~al.}(1989)Lecun, Boser, Denker, Henderson, Howard,
+  Hubbard, and Jackel]{conv}
+Lecun, Y.; Boser, B.; Denker, J.S.; Henderson, D.; Howard, R.E.; Hubbard, W.;
+  Jackel, L.D.
+\newblock {Backpropagation applied to hand-written zip code recognition}.
+\newblock {\em Neural Comput.} {\bf 1989}, {\em 1},~541--551.
+
+\bibitem[Krizhevsky \em{et~al.}(2012)Krizhevsky, Sutskever, and
+  Hinton]{alexnet}
+Krizhevsky, A.; Sutskever, I.; Hinton, G.E.
+\newblock {Imagenet classification with deep convolutional neural networks}. In Proceedings of the 25th International Conference on Neural Information Processing Systems, Lake Tahoe, NV, USA, 3--6 December 2012, pp. 1097--1105.
+
+
+\bibitem[{Hu} \em{et~al.}(2017){Hu}, {Shen}, and {Sun}]{imagenet2017}
+{Hu}, J.; {Shen}, L.; {Sun}, G.
+\newblock {Squeeze-and-Excitation Networks}.
+\newblock {\em arXiv} {\bf 2017},
+\newblock arXiv:1709.01507.
+
+\bibitem[Li \em{et~al.}(2017)Li, Qi, Dai, Ji, and Wei]{coco2016}
+Li, Y.; Qi, H.; Dai, J.; Ji, X.; Wei, Y.
+\newblock {Fully Convolutional Instance-aware Semantic Segmentation}.  \emph{arXiv} \textbf{2017}, arXiv:1611.07709
+
+
+\bibitem[Nair and Hinton(2010)]{relu}
+Nair, V.; Hinton, G.E.
+\newblock {Rectified linear units improve restricted Bolzmann machines}. In Proceedings of the 27th International Conference on Machine Learning, Haifa, Israel,  21--24 June  2010; Volume~27, pp. 807--814.
+
+
+\bibitem[Deng \em{et~al.}(2009)Deng, Dong, Socher, Li, Li, and
+  Fei-Fei]{imagenet}
+Deng, J.; Dong, W.; Socher, R.; Li, L.J.; Li, K.; Fei-Fei, L.
+\newblock {ImageNet: A Large-Scale Hierarchical Image Database}. In {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,} Miami,~FL,~USA, 20--25~June 2009.
+
+
+\bibitem[Sobel(2014)]{SobelFeldmanFilter}
+Sobel, I.; Feldman, G.
+\newblock An Isotropic 3 $\times$ 3 Image Gradient {Operator}. In \emph{Pattern Classification and Scene Analysis};  Wiley: Hoboken, NJ, USA, 1973; pp. 271--272.
+
+\bibitem[Fischer \em{et~al.}(2007)Fischer, Sroubek, Perrinet, Redondo, and
+  Crist{\'o}bal]{fischer07cv}
+Fischer, S.; Sroubek, F.; Perrinet, L.U.; Redondo, R.; Crist{\'o}bal, G.
+\newblock Self-invertible 2{D} log-{G}abor wavelets.
+\newblock {\em Int.~J.~Comput. Vis.} {\bf 2007}, \emph{75}, 231--246.
+
+\bibitem[Dalal and Triggs(2005)]{HOG}
+Dalal, N.; Triggs, B.
+\newblock Histograms of oriented gradients for human detection.
+\newblock  In {Proceedings of the IEEE  Computer Society Conference on} Computer Vision and Pattern Recognition,  San Diego, CA, USA,  20--25 June 2005; Volume~1, pp. 886--893.
+
+
+\bibitem[Rumelhart \em{et~al.}(1986)Rumelhart, Hinton, and
+  Williams]{RumelhartBP}
+Rumelhart, D.E.; Hinton, G.E.; Williams, R.J.
+\newblock Learning representations by back-propagating errors.
+\newblock {\em Nature} {\bf 1986}, {\em 323},~533.
+
+\bibitem[Zeiler and Fergus(2013)]{Zeiler_Fergus_2013}
+Zeiler, M.D.; Fergus, R.
+\newblock Visualizing and Understanding Convolutional Networks. In {Proceedings of the Computer Vision---ECCV 2014}, Zurich, Switzerland, 6--12 September 2014; {Volume 8689}, pp.~818--833, doi:{10.1007/978-3-319-10590-1\_53}.
+
+
+\bibitem[Olah \em{et~al.}(2017)Olah, Mordvintsev, and
+  Schubert]{olah2017feature}
+Olah, C.; Mordvintsev, A.; Schubert, L.
+\newblock Feature Visualization.
+\newblock {\em Distill} {\bf 2017},
+\newblock doi:{10.23915/distill.00007}.
+
+\bibitem[Mahendran and Vedaldi(2015)]{Mahendran_Vedaldi_2014}
+Mahendran, A.; Vedaldi, A.
+\newblock Understanding Deep Image Representations by Inverting Them.  \emph{arXiv} \textbf{2015}, arXiv:1412.0035
+
+\bibitem[Hinton and Zemel(1994)]{hinton1994autoencoders}
+Hinton, G.E.; Zemel, R.S.
+\newblock Autoencoders, minimum description length and Helmholtz free energy.
+\newblock  In {Proceedings of the Advances in Neural Information Processing Systems}, Denver, Colorado, \mbox{28 November--1 December 1994}; pp. 3--10.
+
+\bibitem[Vincent \em{et~al.}(2008)Vincent, Larochelle, Bengio, and
+  Manzagol]{vincent2008extracting}
+Vincent, P.; Larochelle, H.; Bengio, Y.; Manzagol, P.A.
+\newblock Extracting and composing robust features with denoising autoencoders.
+\newblock  In Proceedings of the 25th international conference on Machine
+  learning,  Helsinki,~Finland,  5--9 July 2008; pp. 1096--1103.
+
+
+\bibitem[Wang \em{et~al.}(2014)Wang, Huang, Wang, and
+  Wang]{wang2014generalized}
+Wang, W.; Huang, Y.; Wang, Y.; Wang, L.
+\newblock Generalized autoencoder: A neural network framework for
+  dimensionality reduction.
+\newblock  In Proceedings of the IEEE conference on computer vision and pattern
+  recognition workshops,  Columbus, OH, USA,  23--28 June 2014; pp. 490--497.
+
+
+\bibitem[Kingma and Welling(2013)]{VAE}
+Kingma, D.P.; Welling, M.
+\newblock Auto-Encoding Variational Bayes.
+\newblock {\em arXiv} {\bf 2013},
+\newblock arXiv:1312.6114.
+
+\bibitem[El-emam(2008)]{El-emam_2008}
+El-emam, N.N.
+\newblock Embedding a large amount of information using high secure neural
+  based steganography algorithm.
+\newblock {\em Int. J. Inf. Commun.  Eng.} {\bf 2008}, {\em 4}, pp. 223--232.
+
+\bibitem[Saleema and Amarunnishad(2016)]{Saleema_Amarunnishad_2016}
+Saleema, A.; Amarunnishad, T.
+\newblock A New Steganography Algorithm Using Hybrid Fuzzy Neural Networks.
+\newblock {\em Procedia Technol.} {\bf 2016}, {\em 24},~1566–1574.
+\newblock
+  doi:{\changeurlcolor{black}\href{https://doi.org/10.1016/j.protcy.2016.05.139}{\detokenize{10.1016/j.protcy.2016.05.139}}}.
+
+\bibitem[Volkhonskiy \em{et~al.}(2017)Volkhonskiy, Nazarov, Borisenko, and
+  Burnaev]{SGAN}
+Volkhonskiy, D.; Nazarov, I.; Borisenko, B.; Burnaev, E.
+\newblock Steganographic Generative Adversarial Networks.
+\newblock {\em arXiv} {\bf 2017},
+\newblock arXiv:1703.05502.
+
+\bibitem[Shi \em{et~al.}(2017)Shi, Dong, Wang, Qian, and Zhang]{SSGAN}
+Shi, H.; Dong, J.; Wang, W.; Qian, Y.; Zhang, X.
+\newblock SSGAN: Secure Steganography Based on Generative Adversarial Networks.
+\newblock {\em arXiv} {\bf 2017},
+\newblock arXiv:1707.01613.
+
+\bibitem[Baluja(2017)]{Baluja_2017}
+Baluja, S. Hiding Images in Plain Sight: Deep Steganograph.
+\newblock In {\em Advances in Neural Information Processing Systems 30}; Guyon,
+  I.; Luxburg, U.V.; Bengio, S.; Wallach, H.; Fergus, R.; Vishwanathan, S.;
+  Garnett, R., Eds.; Curran Associates, Inc.: Red Hook, NY, USA,  2017; pp. 2069--2079.
+
+
+\bibitem[Goodfellow \em{et~al.}(2014)Goodfellow, Pouget-Abadie, Mirza, Xu,
+  Warde-Farley, Ozair, Courville, and Bengio]{GAN}
+Goodfellow, I.; Pouget-Abadie, J.; Mirza, M.; Xu, B.; Warde-Farley, D.; Ozair,
+  S.; Courville, A.; Bengio, Y.
+\newblock Generative adversarial nets.
+\newblock In {Proceedings of the } Advances in neural information processing systems, Montreal, QC, Canada,  8--13 December 2014; pp. 2672--2680.
+
+
+\bibitem[Ioffe and Szegedy(2015)]{batchnorm}
+Ioffe, S.; Szegedy, C.
+\newblock Batch Normalization: Accelerating Deep Network Training by Reducing
+  Internal Covariate Shift.
+\newblock  In Proceedings of the 32nd International Conference on International  Conference on Machine Learning---Volume 37, Lille, France, 6--11 July 2015;  pp.  448--456.
+
+
+\bibitem[Clevert \em{et~al.}(2015)Clevert, Unterthiner, and Hochreiter]{elu}
+Clevert, D.A.; Unterthiner, T.; Hochreiter, S.
+\newblock {Fast and Accurate Deep Network Learning by Exponential Linear Units
+  (ELUs)}.
+\newblock {\em arXiv} {\bf 2015},
+\newblock arXiv:1511.07289.
+
+\bibitem[Srivastava \em{et~al.}(2015)Srivastava, Greff, and
+  Schmidhuber]{highway}
+Srivastava, R.K.; Greff, K.; Schmidhuber, J.
+\newblock {Highway Networks}.
+\newblock {\em arXiv} {\bf 2015},
+\newblock arXiv:1505.00387.
+
+\bibitem[He \em{et~al.}(2016)He, Zhang, Ren, and Sun]{resnet}
+He, K.; Zhang, X.; Ren, S.; Sun, J.~{Deep Residual Learning for Image Recognition}. \emph{arXiv}  \textbf{2016}, arXiv:1512.03385.
+
+
+\bibitem[Xie \em{et~al.}(2017)Xie, Girshick, Dollár, Tu, and He]{resnext}
+Xie, S.; Girshick, R.; Dollár, P.; Tu, Z.; He, K.~{Aggregated Residual Transformations for Deep Neural Networks}.
+\newblock \emph{arXiv}  \textbf{2017}, arXiv:1611.05431
+
+\bibitem[Chollet(2016)]{sepconv}
+Chollet, F.
+\newblock {Xception: Deep Learning with Depthwise Separable Convolutions}.
+\newblock {\em arXiv} {\bf 2016},
+\newblock arXiv:1610.02357.
+
+\bibitem[Szegedy \em{et~al.}(2015)Szegedy, Liu, Jia, Sermanet, Reed, Anguelov,
+  Erhan, Vanhoucke, Rabinovich, et~al.]{inceptionv1}
+Szegedy, C.; Liu, W.; Jia, Y.; Sermanet, P.; Reed, S.; Anguelov, D.; Erhan, D.;
+  Vanhoucke, V.; Rabinovich, A.
+\newblock Going deeper with convolutions.
+\newblock \emph{arXiv} \textbf{2015}, arXiv:1409.4842.
+
+\bibitem[Szegedy \em{et~al.}(2017)Szegedy, Ioffe, Vanhoucke, and
+  Alemi]{inceptionv4}
+Szegedy, C.; Ioffe, S.; Vanhoucke, V.; Alemi, A.A.
+\newblock Inception-v4, inception-resnet and the impact of residual connections
+  on learning. \emph{arXiv} \textbf{2017}, arXiv:1602.07261.
+%\newblock  AAAI,  , Vol.~4, p.~12.
+
+\bibitem[Kingma and Ba(2014)]{adam}
+Kingma, D.; Ba, J.
+\newblock {Adam: A Method for Stochastic Optimization}.
+\newblock {\em arXiv} {\bf 2014},
+\newblock arXiv:1412.6980.
+
+\bibitem[Boehm(2014)]{stegexpose}
+Boehm, B.
+\newblock {StegExpose - A Tool for Detecting LSB Steganography}.
+\newblock {\em arXiv} {\bf 2014},
+\newblock arXiv:1410.6656.
+
+\bibitem[Dumitrescu \em{et~al.}(2003)Dumitrescu, Wu, and
+  Wang]{samplepairanalysis}
+Dumitrescu, S.; Wu, X.; Wang, Z.
+\newblock {Detection of LSB steganography via sample pair analysis}.
+\newblock {\em IEEE Trans. Signal Process.} {\bf 2003}, {\em
+  51},~1995--2007.
+
+\bibitem[Fridrich and Goljan(2004)]{fridrich2004reliable}
+Fridrich, J.; Goljan, M.
+\newblock Reliable Detection of LSB Steganography in Color and Grayscale
+  Images. US Patent 6,831,991, 14 December 2004.
+
+
+\bibitem[Westfeld and Pfitzmann(1999)]{westfeld1999attacks}
+Westfeld, A.; Pfitzmann, A.
+\newblock Attacks on steganographic systems. 
+\newblock  In {Proceedings of the }International workshop on information hiding, Dresden, Germany,  29 September--  1 October 1999; pp. 61--76.
+
+\bibitem[Dumitrescu \em{et~al.}(2002)Dumitrescu, Wu, and
+  Memon]{dumitrescu2002steganalysis}
+Dumitrescu, S.; Wu, X.; Memon, N.
+\newblock On steganalysis of random LSB embedding in continuous-tone images. 
+\newblock In~{Proceedings of the 2002 International Conference  on} Image Processing,  Rochester, NY, USA,  22--25 September 2002; Volume 3, pp. 641--644.
+
+
+\bibitem[Makhzani \em{et~al.}(2016)Makhzani, Shlens, Jaitly, and
+  Goodfellow]{AAE}
+Makhzani, A.; Shlens, J.; Jaitly, N.; Goodfellow, I.
+\newblock Adversarial Autoencoders.
+\newblock  In {Proceedings of the }International Conference on Learning Representations,  San Juan, Puerto Rico, 2--4 May 2016.
+
+
+\bibitem[Arjovsky \em{et~al.}(2017)Arjovsky, Chintala, and Bottou]{WGAN}
+Arjovsky, M.; Chintala, S.; Bottou, L.
+\newblock Wasserstein generative adversarial networks.
+\newblock In {Proceedings of the } International Conference on Machine Learning, Sydney,  Australia, 6--8 August 2017; pp. 214--223.
+
+
+\bibitem[Berthelot \em{et~al.}(2017)Berthelot, Schumm, and Metz]{BEGAN}
+Berthelot, D.; Schumm, T.; Metz, L.
+\newblock BEGAN: Boundary Equilibrium Generative Adversarial Networks.
+\newblock {\em arXiv} {\bf 2017}, arXiv:1703.10717.
+
+\end{thebibliography}
+
+
+\end{document}
