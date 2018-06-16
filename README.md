@@ -38,6 +38,7 @@ The command line arguments can be tweeked:
 
 ## Please cite as
 
+```
 @Article{StegNet,
   AUTHOR = {Wu, Pin and Yang, Yang and Li, Xiaoqiang},
   TITLE = {StegNet: Mega Image Steganography Capacity with Deep Convolutional Network},
@@ -50,3 +51,4 @@ The command line arguments can be tweeked:
   ISSN = {1999-5903},
   DOI = {10.3390/fi10060054}
 }
+```
