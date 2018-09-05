@@ -1,7 +1,16 @@
-# StegNet Paper: Mega-Image-Steganography-Capacity-with-Deep-Convolutional-Network
+# Deep Image Steganography
+
+Image-into-Image Steganography Using Deep Convolutional Network
+
+StegNet: Mega-Image-Steganography-Capacity-with-Deep-Convolutional-Network
+
 ---
 
-## Paper
+## PCM2018 Paper
+
+[PDF Version](./paper/Image-into-Image-Steganography-Using-Deep-Convolutional-Network.pdf)
+
+## Future Internet Paper
 
 [PDF Version](./paper/StegNet-Mega-Image-Steganography-Capacity-with-Deep-Convolutional-Network.pdf)
 
@@ -38,8 +47,16 @@ The command line arguments can be tweeked:
 
 ## Please cite as
 
+PCM 2018
+
 ```
-@Article{StegNet,
+@TODO
+```
+
+Future Internet
+
+```
+@Article{StegNet-FutureInternet,
   AUTHOR = {Wu, Pin and Yang, Yang and Li, Xiaoqiang},
   TITLE = {StegNet: Mega Image Steganography Capacity with Deep Convolutional Network},
   JOURNAL = {Future Internet},
