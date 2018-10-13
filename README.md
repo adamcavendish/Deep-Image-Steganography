@@ -50,7 +50,17 @@ The command line arguments can be tweeked:
 PCM 2018
 
 ```
-@TODO
+@InProceedings{StegNet-PCM2018,
+  AUTHOR = {Wu, Pin and Yang, Yang and Li, Xiaoqiang},
+  EDITOR = {Hong, Richang and Cheng, Wen-Huang and Yamasaki, Toshihiko and Wang, Meng and Ngo, Chong-Wah},
+  TITLE = {Image-into-Image Steganography Using Deep Convolutional Network},
+  BOOKTITLE = {Advances in Multimedia Information Processing -- PCM 2018},
+  YEAR = {2018},
+  PUBLISHER = {Springer International Publishing},
+  ADDRESS = {Cham},
+  PAGES = {792--802},
+  ISBN = {978-3-030-00767-6}
+}
 ```
 
 Future Internet
